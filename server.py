@@ -6,6 +6,8 @@ import json
 import uuid
 from flask import Flask, abort, request
 import time
+import geopy
+import geopy.distance
 
 MESSAGES = []  # We'll just use a global list until we run out of memory
 app = Flask(__name__)
@@ -26,8 +28,16 @@ def add_or_update_message():
 
 def get_messages():
     """Get all the messages nearby"""
-    # TODO: Filter by location
-    return json.dumps(MESSAGES)
+    filtered_messages = []
+    data = request.get_json()
+    here = geopy.Point(data['lat'], data['long'])
+    # TODO: Filter by time as well
+    for msg in MESSAGES:
+        there = geopy.Point(msg['lat'], msg['long'])
+        distance = geopy.distance.distance(here, there).meters
+        if distance <= msg['size']:
+            filtered_messages.append(msg)
+    return json.dumps(filtered_messages)
 
 
 def remove_message():
